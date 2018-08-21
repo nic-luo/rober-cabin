@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+group.rober.runtime.autoconfigure.RuntimeAutoConfiguration,\
+group.rober.runtime.autoconfigure.SwaggerAutoConfiguration

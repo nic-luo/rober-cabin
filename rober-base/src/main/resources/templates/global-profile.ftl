@@ -1,0 +1,3 @@
+var $roberProfile={
+    contextPath:"${ctxPath}"
+};
