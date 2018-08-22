@@ -361,6 +361,7 @@
             <resource>
                 <directory>src/main/java</directory>
                 <includes>
+                    <include>**/*.*</include>
                     <include>**/*.xml</include>
                     <include>**/*.sql.md</include>
                 </includes>

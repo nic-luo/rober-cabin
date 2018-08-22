@@ -1,7 +1,16 @@
 package group.rober.runtime.autoconfigure;
 
+import group.rober.runtime.kit.IOKit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.util.ResourceUtils;
 
+import javax.annotation.PostConstruct;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +39,11 @@ public class RuntimeProperties {
     private String allowedOrigins = "*";
 
     private String staticResourceProxyUrl;
+
+    private String scriptEngineName = "groovy";
+    private String globalScript = "";
+
+    private Logger logger = LoggerFactory.getLogger(getClass());
 
     public String getTemporaryDirectory() {
         return temporaryDirectory;
@@ -165,5 +179,39 @@ public class RuntimeProperties {
 
     public void setStaticResourceProxyUrl(String staticResourceProxyUrl) {
         this.staticResourceProxyUrl = staticResourceProxyUrl;
+    }
+
+    public String getScriptEngineName() {
+        return scriptEngineName;
+    }
+
+    public void setScriptEngineName(String scriptEngineName) {
+        this.scriptEngineName = scriptEngineName;
+    }
+
+    public String getGlobalScript() {
+        return globalScript;
+    }
+
+    public void setGlobalScript(String globalScript) {
+        this.globalScript = globalScript;
+    }
+
+    @PostConstruct
+    public void init(){
+        String res = "classpath:group/rober/runtime/autoconfigure/GlobalScript.txt";
+        URL url = null;
+        InputStream inputStream = null;
+        try {
+            url = ResourceUtils.getURL(res);
+            inputStream = url.openStream();
+            globalScript = IOKit.toString(inputStream, Charset.defaultCharset());
+        } catch (FileNotFoundException e) {
+            logger.warn("全局资源脚本不存在",e);
+        } catch (IOException e) {
+            logger.warn("读取全局资源脚本出错",e);
+        } finally {
+            IOKit.close(inputStream);
+        }
     }
 }

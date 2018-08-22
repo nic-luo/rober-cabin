@@ -10,6 +10,8 @@ import group.rober.dataform.model.types.ElementDataEditStyle;
 import group.rober.runtime.kit.*;
 import group.rober.runtime.lang.MapData;
 import group.rober.sql.core.MapDataAccessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,8 @@ public class DictExprResolve {
     protected NamedParameterJdbcTemplate jdbcTemplate;
     @Autowired
     protected MapDataAccessor mapDataAccessor;
+
+    protected Logger logger = LoggerFactory.getLogger(getClass());
 
     public DictService getDictService() {
         return dictService;
@@ -180,6 +184,13 @@ public class DictExprResolve {
                 items.add(entry);
             }
             dictItems = toDictItemNodes(items);
+        }else if(ElementDataDictCodeMode.JSON==element.getElementUIHint().getDictCodeMode()){
+            String jsonText = element.getElementUIHint().getDictCodeExpr();
+            try{
+                dictItems = JSONKit.jsonToBeanList(jsonText,DictItemNode.class);
+            }catch(Exception e){
+                logger.error("JSON解析为数据字典对象出错。JSON["+jsonText+"]",e);
+            }
         }
 
         ElementDataEditStyle editStyle = element.getElementUIHint().getEditStyle();

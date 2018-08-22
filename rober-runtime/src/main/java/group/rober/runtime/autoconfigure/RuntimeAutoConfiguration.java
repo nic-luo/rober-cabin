@@ -3,6 +3,7 @@ package group.rober.runtime.autoconfigure;
 import com.alibaba.druid.support.http.StatViewServlet;
 import com.alibaba.druid.support.http.WebStatFilter;
 import group.rober.runtime.kit.ListKit;
+import group.rober.runtime.kit.StringKit;
 import group.rober.runtime.support.BeanPostProcessorImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,10 +12,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.context.annotation.*;
 import org.springframework.core.Ordered;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -24,6 +22,9 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.DefaultServletHandlerConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.util.*;
 
 @Configuration
@@ -107,6 +108,23 @@ public class RuntimeAutoConfiguration extends WebMvcConfigurerAdapter {
         registrationBean.setFilter(filter);
         registrationBean.setOrder(Ordered.HIGHEST_PRECEDENCE);
         return registrationBean;
+    }
+
+    @Bean("scriptEngine")
+    @Scope("prototype")
+    public ScriptEngine getScriptEngineManager() {
+        ScriptEngineManager scriptEngineManager = new ScriptEngineManager();
+        ScriptEngine scriptEngine = scriptEngineManager.getEngineByName(properties.getScriptEngineName());
+        //1.运行全局脚本
+        try {
+            if (StringKit.isNotBlank(properties.getGlobalScript())) {
+                scriptEngine.eval(properties.getGlobalScript());
+            }
+        } catch (ScriptException e) {
+            logger.error("执行全局脚本出错,["+properties.getGlobalScript()+"]",e);
+        }
+
+        return scriptEngine;
     }
 
     @Override
