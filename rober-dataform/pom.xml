@@ -23,11 +23,6 @@
         </dependency>
         <dependency>
             <groupId>group.rober</groupId>
-            <artifactId>rober-office</artifactId>
-            <version>2.0.2</version>
-        </dependency>
-        <dependency>
-            <groupId>group.rober</groupId>
             <artifactId>rober-base</artifactId>
             <version>2.0.2</version>
             <optional>true</optional>

@@ -64,7 +64,7 @@ public class MapDataUpdater extends AbstractUpdater implements BeanSelfAware{
 //        this.rowMapperThreadLocal = rowMapperThreadLocal;
 //    }
 
-    protected NameConverter getNameConverter() {
+    public NameConverter getNameConverter() {
         NameConverter nameConverter = super.getNameConverter();
         if (nameConverter == null)
             nameConverter = new UnderlinedNameConverter();

@@ -342,6 +342,16 @@ public abstract class StringKit extends StringUtils {
         return tpl;
     }
 
+    public static String uuid() {
+        return uuid("");
+    }
+
+    public static String uuid(String delimiter) {
+        String uuid = UUID.randomUUID().toString();	//获取UUID并转化为String对象
+        uuid = uuid.replace("-", delimiter);				//因为UUID本身为32位只是生成时多了“-”，所以将它们去点就可
+        return uuid;
+    }
+
 
     /**
      * 由于该类继承于SringUtils，而父类中，有leftPad方法

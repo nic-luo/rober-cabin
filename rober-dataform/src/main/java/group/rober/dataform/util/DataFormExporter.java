@@ -4,15 +4,20 @@ import group.rober.dataform.model.DataForm;
 import group.rober.dataform.model.DataFormCombiner;
 import group.rober.dataform.model.DataFormElement;
 import group.rober.dataform.model.types.ElementDataEditStyle;
-import group.rober.office.excel.utils.ExcelUtils;
 import group.rober.runtime.kit.BeanKit;
 import group.rober.runtime.kit.DateKit;
+import group.rober.runtime.kit.IOKit;
 import group.rober.runtime.kit.StringKit;
 import group.rober.sql.core.PaginationData;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.openxml4j.exceptions.NotOfficeXmlFileException;
+import org.apache.poi.openxml4j.exceptions.OpenXML4JException;
+import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,6 +52,34 @@ public class DataFormExporter {
     }
 
     /**
+     * 打开EXCEL文件获取工作薄对象
+     *
+     * @param inputStream inputStream
+     * @return Workbook
+     * @throws IOException IOException
+     */
+    public static Workbook openWorkbook(InputStream inputStream) throws IOException {
+        Workbook workBook = null;
+        InputStream newIs = inputStream;
+        try {
+            try {
+                newIs = IOKit.convertToByteArrayInputStream(newIs);
+                workBook = new XSSFWorkbook(OPCPackage.open(newIs));
+            } catch (NotOfficeXmlFileException e) {
+                newIs.reset();
+                workBook = new HSSFWorkbook(newIs);
+            }
+        } catch (IOException e) {
+            throw e;
+        } catch (OpenXML4JException e) {
+            throw new IOException("读取流2007+格式异常", e);
+        } finally {
+            IOKit.close(newIs);
+        }
+        return workBook;
+    }
+
+    /**
      * 填充数据
      *
      * @param templateResource 数据输入模板
@@ -54,11 +87,11 @@ public class DataFormExporter {
      * @throws IOException IOException
      */
     public void exportListToExcel(InputStream templateResource,OutputStream outputStream) throws IOException {
-        Workbook workbook = ExcelUtils.openWorkbook(templateResource);
+        Workbook workbook = LiteExcelUtils.openWorkbook(templateResource);
         Sheet sheet = workbook.getSheetAt(sheetIndex);
         fillHeader(sheet);
         fillDataList(sheet);
-        ExcelUtils.autoSizeColumn(sheet);
+        LiteExcelUtils.autoSizeColumn(sheet);
         workbook.write(outputStream);
     }
 
@@ -88,7 +121,7 @@ public class DataFormExporter {
                 cell = startCell;
             }else{
                 cell = row.createCell(offset);
-                ExcelUtils.copyCell(startCell,cell,false);
+                LiteExcelUtils.copyCell(startCell,cell,false);
             }
             cell.setCellValue(element.getName());
 
@@ -141,7 +174,7 @@ public class DataFormExporter {
                     cell = excelRow.createCell(offset);
                 }
 
-                ExcelUtils.copyCell(startCell,cell,false);
+                LiteExcelUtils.copyCell(startCell,cell,false);
                 //币种处理
                 if(uiHint.getEditStyle() == ElementDataEditStyle.Currency){
                     Integer digits = element.getDecimalDigits();    //小数位数
@@ -154,15 +187,15 @@ public class DataFormExporter {
                         formatStr += ("."+suffix.toString());
                     }
 
-                    ExcelUtils.setNumberCellFormat(cell,formatStr);
+                    LiteExcelUtils.setNumberCellFormat(cell,formatStr);
 
                 }else if(uiHint.getEditStyle() == ElementDataEditStyle.DatePicker || value instanceof Date){
-                    ExcelUtils.setNumberCellFormat(cell, DateKit.DATE_FORMAT);
+                    LiteExcelUtils.setNumberCellFormat(cell, DateKit.DATE_FORMAT);
                 }else if(uiHint.getEditStyle() == ElementDataEditStyle.DateTimePicker){
-                    ExcelUtils.setNumberCellFormat(cell, DateKit.DATE_TIME_FORMAT);
+                    LiteExcelUtils.setNumberCellFormat(cell, DateKit.DATE_TIME_FORMAT);
                 }
 
-                ExcelUtils.setCellValue(cell,value);
+                LiteExcelUtils.setCellValue(cell,value);
                 offset ++;
 
             }
