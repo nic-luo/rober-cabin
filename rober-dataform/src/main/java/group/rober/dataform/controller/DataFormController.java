@@ -32,6 +32,7 @@ import group.rober.runtime.lang.ValueObject;
 import group.rober.sql.core.PaginationData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
@@ -112,12 +113,20 @@ public class DataFormController {
      */
     @GetMapping("/meta/{form}")
     public DataFormCombiner<Object> getDataForm(@PathVariable("form") String form) {
+        return getDataFormWithParam(form,new LinkedMultiValueMap<String,Object>());
+    }
+
+    @GetMapping("/meta/{form}/{param}")
+    public DataFormCombiner<Object> getDataFormWithParam(@PathVariable("form") String form,@MatrixVariable(pathVar = "param") MultiValueMap<String, Object> paramMatrix) {
         DataFormAddon addon = getDataFormAddon(form);
 
         DataForm dataForm = addon.dataForm;
 
+        Map<String, Object> paramMap = MapKit.flatMultiValueMap(paramMatrix);
+        fillContextEnvToQueryParam(paramMap);
+
         DataFormCombiner<Object> ret = new DataFormCombiner<Object>();
-        fillDataFormCombiner(ret, addon.dataForm);
+        fillDataFormCombiner(ret, addon.dataForm,paramMap);
         ret.setBody(null);
 
         return ret;
@@ -247,7 +256,7 @@ public class DataFormController {
     }
 
 
-    private void fillDataFormCombiner(DataFormCombiner combiner, DataForm dataForm) {
+    private void fillDataFormCombiner(DataFormCombiner combiner, DataForm dataForm, Map<String, Object> params) {
         combiner.setMeta(desensitDataForm(dataForm));
         Map<String, List<DictItemNode>> dictItemMap = new LinkedHashMap<String, List<DictItemNode>>();
         //处理代码表
@@ -257,7 +266,7 @@ public class DataFormController {
             if(element.getElementUIHint().getDictCodeMode() != null){
                 List<DictItemNode> dictItems = null;
                 if(element.getElementUIHint().getDictCodeLazy() == false){
-                    dictItems = dictExprResolve.getDictItems(element, null);
+                    dictItems = dictExprResolve.getDictItems(element, params);
                     if (dictItems == null) continue;
                 }
                 dictItemMap.put(element.getCode(), dictItems);
@@ -448,7 +457,7 @@ public class DataFormController {
         PaginationData<?> data = addon.dataListHandler.query(addon.dataForm, paramMap, filterMap, sortMap, size, index);
 
         DataFormCombiner<PaginationData<?>> ret = new DataFormCombiner<PaginationData<?>>();
-        fillDataFormCombiner(ret, addon.dataForm);
+        fillDataFormCombiner(ret, addon.dataForm, paramMap);
         ret.setBody(data);
 
         //添加数据字典项，同时延迟加载处理，有数据的字典项必需要先加载过去
@@ -570,7 +579,7 @@ public class DataFormController {
         Object object = handler.query(addon.dataForm, param);
 
         DataFormCombiner<Object> ret = new DataFormCombiner<Object>();
-        fillDataFormCombiner(ret, addon.dataForm);
+        fillDataFormCombiner(ret, addon.dataForm, param);
         ret.setBody(object);
 
         //添加数据字典项，同时延迟加载处理，有数据的字典项必需要先加载过去
